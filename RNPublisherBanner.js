@@ -5,7 +5,7 @@ import {
   findNodeHandle,
   ViewPropTypes,
 } from 'react-native';
-import { string, func, arrayOf } from 'prop-types';
+import { string, func, arrayOf, object } from 'prop-types';
 
 import { createErrorFromErrorData } from './utils';
 
@@ -102,6 +102,11 @@ PublisherBanner.propTypes = {
    * Array of test devices. Use PublisherBanner.simulatorId for the simulator
    */
   testDevices: arrayOf(string),
+
+  /**
+   * Optional object with key-value pairs for custom targeting
+   */
+  customTargeting: object,
 
   onSizeChange: func,
 
