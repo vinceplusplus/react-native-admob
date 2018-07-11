@@ -2,12 +2,17 @@ package com.sbugert.rnadmob;
 
 import android.content.Context;
 import android.support.annotation.Nullable;
+import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
+import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.ReadableNativeArray;
 import com.facebook.react.common.MapBuilder;
 import com.facebook.react.uimanager.PixelUtil;
@@ -23,7 +28,7 @@ import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.doubleclick.PublisherAdView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 class ReactPublisherAdView extends ReactViewGroup implements AppEventListener {
@@ -34,6 +39,7 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener {
     AdSize[] validAdSizes;
     String adUnitID;
     AdSize adSize;
+    List<Pair<String, String>> customTargeting;
 
     public ReactPublisherAdView(final Context context) {
         super(context);
@@ -155,6 +161,11 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener {
                 adRequestBuilder.addTestDevice(testDevice);
             }
         }
+        if (customTargeting != null) {
+            for (Pair<String, String> pair : customTargeting) {
+                adRequestBuilder.addCustomTargeting(pair.first, pair.second);
+            }
+        }
         PublisherAdRequest adRequest = adRequestBuilder.build();
         this.adView.loadAd(adRequest);
     }
@@ -171,6 +182,10 @@ class ReactPublisherAdView extends ReactViewGroup implements AppEventListener {
 
     public void setTestDevices(String[] testDevices) {
         this.testDevices = testDevices;
+    }
+
+    public void setCustomTargeting(List<Pair<String, String>> customTargeting) {
+        this.customTargeting = customTargeting;
     }
 
     public void setAdSize(AdSize adSize) {
@@ -198,6 +213,7 @@ public class RNPublisherBannerViewManager extends ViewGroupManager<ReactPublishe
     public static final String PROP_VALID_AD_SIZES = "validAdSizes";
     public static final String PROP_AD_UNIT_ID = "adUnitID";
     public static final String PROP_TEST_DEVICES = "testDevices";
+    public static final String PROP_CUSTOM_TARGETING = "customTargeting";
 
     public static final String EVENT_SIZE_CHANGE = "onSizeChange";
     public static final String EVENT_AD_LOADED = "onAdLoaded";
@@ -208,6 +224,8 @@ public class RNPublisherBannerViewManager extends ViewGroupManager<ReactPublishe
     public static final String EVENT_APP_EVENT = "onAppEvent";
 
     public static final int COMMAND_LOAD_BANNER = 1;
+
+    public static final String TAG = "react-native-admob";
 
     @Override
     public String getName() {
@@ -274,6 +292,45 @@ public class RNPublisherBannerViewManager extends ViewGroupManager<ReactPublishe
         ReadableNativeArray nativeArray = (ReadableNativeArray)testDevices;
         ArrayList<Object> list = nativeArray.toArrayList();
         view.setTestDevices(list.toArray(new String[list.size()]));
+    }
+
+    @ReactProp(name = PROP_CUSTOM_TARGETING)
+    public void setPropCustomTargeting(final ReactPublisherAdView view, final ReadableMap customTargeting) {
+        List<Pair<String, String>> pairs = new ArrayList<>();
+        for (final ReadableMapKeySetIterator keyIter = customTargeting.keySetIterator(); keyIter.hasNextKey(); ) {
+            final String key = keyIter.nextKey();
+            final ReadableType type = customTargeting.getType(key);
+            switch (type) {
+                case Null:
+                    pairs.add(new Pair<>(key, ""));
+                    break;
+                case Boolean:
+                    assert false;
+                    Log.e(TAG, "setPropCustomTargeting: Boolean isn't supported");
+                    break;
+                case Number:
+                    double doubleValue = customTargeting.getDouble(key);
+                    int intValue = customTargeting.getInt(key);
+                    if (doubleValue == intValue) {
+                        pairs.add(new Pair<>(key, String.valueOf(intValue)));
+                    } else {
+                        pairs.add(new Pair<>(key, String.valueOf(doubleValue)));
+                    }
+                    break;
+                case String:
+                    pairs.add(new Pair<>(key, customTargeting.getString(key)));
+                    break;
+                case Map:
+                    assert false;
+                    Log.e(TAG, "setPropCustomTargeting: Map isn't supported");
+                    break;
+                case Array:
+                    assert false;
+                    Log.e(TAG, "setPropCustomTargeting: Array isn't supported");
+                    break;
+            }
+        }
+        view.setCustomTargeting(pairs);
     }
 
     private AdSize getAdSizeFromString(String adSize) {
