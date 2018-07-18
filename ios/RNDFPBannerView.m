@@ -34,11 +34,14 @@
         UIViewController *rootViewController = [keyWindow rootViewController];
 
         _bannerView = [[DFPBannerView alloc] init];
+        _bannerView.translatesAutoresizingMaskIntoConstraints = NO;
         _bannerView.delegate = self;
         _bannerView.adSizeDelegate = self;
         _bannerView.appEventDelegate = self;
         _bannerView.rootViewController = rootViewController;
         [self addSubview:_bannerView];
+        [self addConstraint:[NSLayoutConstraint constraintWithItem:_bannerView attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1 constant:0]];
+        [self addConstraint:[NSLayoutConstraint constraintWithItem:_bannerView attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterY multiplier:1 constant:0]];
     }
 
     return self;
